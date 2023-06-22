@@ -87,15 +87,12 @@ const transform_public = (cb) => {
     cb();
 };
 
-const task_build = (cb) => {
-    parallel(
-        transform_ejs,
-        transform_modules,
-        transform_sass,
-        transform_public
-    );
-    cb();
-};
+const task_build = parallel(
+    transform_ejs,
+    transform_modules,
+    transform_sass,
+    transform_public
+);
 
 const task_watch = (cb) => {
     watch(src_glob('ejs'), transform_ejs);
