@@ -57,7 +57,7 @@ const src_glob = (dir, ext = '') => {
 };
 
 const transform_ejs = (cb) => {
-    src([src_glob('ejs'), src_glob('ejs/includes', 'ejs')])
+    src([src_glob('ejs'), '!' + src_glob('ejs/includes', 'ejs')])
         .pipe(ejs({}))
         .on('error', log)
         .pipe(rename({ extname: '.html' }))
