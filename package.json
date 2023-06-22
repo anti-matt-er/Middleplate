@@ -1,0 +1,11 @@
+{
+  "name": "middleplate",
+  "version": "1.0.0",
+  "description": "A boilerplate for easy development of web applications utilising middleware",
+  "scripts": {},
+  "author": "anti-matt-er",
+  "license": "MIT",
+  "devDependencies": {
+    "gulp": "^4.0.2"
+  }
+}
