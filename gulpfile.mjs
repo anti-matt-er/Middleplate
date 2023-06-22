@@ -1,6 +1,7 @@
 import gulp from 'gulp';
 import log from 'fancy-log';
 import rename from 'gulp-rename';
+import { deleteAsync } from 'del';
 import ejs from 'gulp-ejs';
 import htmlmin from 'gulp-htmlmin';
 import webpack from 'webpack-stream';
@@ -11,7 +12,7 @@ import * as dartSass from 'sass';
 import gulpSass from 'gulp-sass';
 import webpackconfig from './webpack.config.js';
 
-const { src, dest, watch, series, parallel } = gulp;
+const { src, dest, watch: gulpwatch, series, parallel } = gulp;
 const sass = gulpSass(dartSass);
 
 const src_dir = './src/';
@@ -92,19 +93,25 @@ const transform_public = (cb) => {
     cb();
 };
 
-export const task_build = parallel(
+export const build = parallel(
     transform_ejs,
     transform_modules,
     transform_sass,
     transform_public
 );
 
-export const task_watch = (cb) => {
-    watch(src_glob('ejs'), transform_ejs);
-    watch(src_glob('mjs'), transform_modules);
-    watch(src_glob('scss'), transform_sass);
-    watch(src_glob('public', '*'), transform_public);
+export const watch = (cb) => {
+    gulpwatch(src_glob('ejs'), transform_ejs);
+    gulpwatch(src_glob('mjs'), transform_modules);
+    gulpwatch(src_glob('scss'), transform_sass);
+    gulpwatch(src_glob('public', '*'), transform_public);
     cb();
 };
 
-export default series(task_build, task_watch);
+export const clean = (cb) => {
+    deleteAsync(`${pub_dir}**`);
+    deleteAsync(pub_dir);
+    cb();
+};
+
+export default series(clean, build, watch);
