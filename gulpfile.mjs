@@ -1,13 +1,18 @@
-const { src, dest, parallel, series, watch } = require('gulp');
-const log = require('fancy-log');
-const rename = require('gulp-rename');
-const ejs = require('gulp-ejs');
-const htmlmin = require('gulp-htmlmin');
-const webpack = require('webpack-stream');
-const sass = require('gulp-sass')(require('sass'));
-const postcss = require('gulp-postcss');
-const autoprefixer = require('autoprefixer');
-const cssnano = require('cssnano');
+import gulp from 'gulp';
+import log from 'fancy-log';
+import rename from 'gulp-rename';
+import ejs from 'gulp-ejs';
+import htmlmin from 'gulp-htmlmin';
+import webpack from 'webpack-stream';
+import postcss from 'gulp-postcss';
+import autoprefixer from 'autoprefixer';
+import cssnano from 'cssnano';
+import * as dartSass from 'sass';
+import gulpSass from 'gulp-sass';
+import webpackconfig from './webpack.config.js';
+
+const { src, dest, watch, series, parallel } = gulp;
+const sass = gulpSass(dartSass);
 
 const src_dir = './src/';
 const pub_dir = './public/';
@@ -68,7 +73,7 @@ const transform_ejs = (cb) => {
 
 const transform_modules = (cb) => {
     src(src_dir)
-        .pipe(webpack(require('./webpack.config.js')))
+        .pipe(webpack(webpackconfig))
         .pipe(dest(pub_path_to('dist')));
     cb();
 };
@@ -87,14 +92,14 @@ const transform_public = (cb) => {
     cb();
 };
 
-const task_build = parallel(
+export const task_build = parallel(
     transform_ejs,
     transform_modules,
     transform_sass,
     transform_public
 );
 
-const task_watch = (cb) => {
+export const task_watch = (cb) => {
     watch(src_glob('ejs'), transform_ejs);
     watch(src_glob('mjs'), transform_modules);
     watch(src_glob('scss'), transform_sass);
@@ -102,6 +107,4 @@ const task_watch = (cb) => {
     cb();
 };
 
-exports.default = series(task_build, task_watch);
-exports.build = task_build;
-exports.watch = task_watch;
+export default series(task_build, task_watch);
