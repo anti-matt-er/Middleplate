@@ -10,7 +10,6 @@ import autoprefixer from 'autoprefixer';
 import cssnano from 'cssnano';
 import * as dartSass from 'sass';
 import gulpSass from 'gulp-sass';
-import webpackconfig from './webpack.config.js';
 
 const { src, dest, watch: gulpwatch, series, parallel } = gulp;
 const sass = gulpSass(dartSass);
@@ -73,8 +72,16 @@ const transform_ejs = (cb) => {
 };
 
 const transform_modules = (cb) => {
-    src(src_dir)
-        .pipe(webpack(webpackconfig))
+    src(src_glob('mjs'))
+        .pipe(
+            webpack({
+                watch: true,
+                mode: 'production',
+                output: {
+                    filename: 'main.bundle.js'
+                }
+            })
+        )
         .pipe(dest(pub_path_to('dist')));
     cb();
 };
