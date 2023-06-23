@@ -10,6 +10,7 @@ import autoprefixer from 'autoprefixer';
 import cssnano from 'cssnano';
 import * as dartSass from 'sass';
 import gulpSass from 'gulp-sass';
+import browserSync from 'browser-sync';
 
 const { src, dest, watch: gulpwatch, series, parallel } = gulp;
 const sass = gulpSass(dartSass);
@@ -67,7 +68,8 @@ const transform_ejs = (cb) => {
         .on('error', log)
         .pipe(rename({ extname: '.html' }))
         .pipe(htmlmin(htmlminopts))
-        .pipe(dest(pub_dir));
+        .pipe(dest(pub_dir))
+        .pipe(browserSync.stream());
     cb();
 };
 
@@ -82,7 +84,8 @@ const transform_modules = (cb) => {
                 }
             })
         )
-        .pipe(dest(pub_path_to('dist')));
+        .pipe(dest(pub_path_to('dist')))
+        .pipe(browserSync.stream());
     cb();
 };
 
@@ -91,12 +94,13 @@ const transform_sass = (cb) => {
         .pipe(sass.sync().on('error', sass.logError))
         .pipe(rename({ extname: '.css' }))
         .pipe(postcss([autoprefixer(), cssnano()]))
-        .pipe(dest(pub_path_to('dist')));
+        .pipe(dest(pub_path_to('dist')))
+        .pipe(browserSync.stream());
     cb();
 };
 
 const transform_public = (cb) => {
-    src(src_glob('public', '*')).pipe(dest(pub_dir));
+    src(src_glob('public', '*')).pipe(dest(pub_dir)).pipe(browserSync.stream());
     cb();
 };
 
@@ -121,4 +125,13 @@ export const clean = (cb) => {
     cb();
 };
 
-export default series(clean, build, watch);
+export const serve = (cb) => {
+    browserSync.init({
+        server: {
+            baseDir: pub_dir
+        }
+    });
+    cb();
+};
+
+export default series(clean, build, parallel(serve, watch));
