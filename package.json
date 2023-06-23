@@ -1,7 +1,7 @@
 {
   "name": "middleplate",
   "version": "1.0.0",
-  "description": "A boilerplate for easy development of web applications utilising middleware",
+  "description": "An opinionated boilerplate for easy development of web applications utilising middleware",
   "scripts": {},
   "author": "anti-matt-er",
   "license": "MIT",
