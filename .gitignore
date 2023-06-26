@@ -28,6 +28,7 @@ node_modules
 
 # Garbage files
 .DS_Store
+.vscode/
 
 # Test results
 test.xunit
