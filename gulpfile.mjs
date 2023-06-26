@@ -1,4 +1,7 @@
 import gulp from 'gulp';
+import path from 'path';
+import fs from 'fs';
+import { globSync } from 'glob';
 import log from 'fancy-log';
 import rename from 'gulp-rename';
 import { deleteAsync } from 'del';
@@ -10,6 +13,7 @@ import autoprefixer from 'autoprefixer';
 import cssnano from 'cssnano';
 import * as dartSass from 'sass';
 import gulpSass from 'gulp-sass';
+import inject from 'gulp-inject-string';
 import browserSync from 'browser-sync';
 
 const { src, dest, watch: gulpwatch, series, parallel } = gulp;
@@ -62,9 +66,51 @@ const src_glob = (dir, ext = '') => {
     return src_path_to(glob_pattern(dir, ext));
 };
 
+const readJSON = (path) => {
+    return JSON.parse(fs.readFileSync(path, { encoding: 'utf8', flag: 'r' }));
+};
+
+const readConfig = () => {
+    let config = {
+        dist: {
+            js: [
+                {
+                    src: 'dist/main.bundle.js',
+                    defer: true
+                }
+            ],
+            css: [
+                {
+                    src: 'dist/main.css'
+                }
+            ]
+        }
+    };
+
+    let configs = globSync(src_glob('config', 'json'));
+
+    for (const file of configs) {
+        config[path.basename(file, 'json').slice(0, -1)] = readJSON(file);
+    }
+
+    return {
+        data: config
+    };
+};
+
+const compileSassVars = (data) => {
+    let vars = [];
+
+    for (const [name, value] of Object.entries(data)) {
+        vars.push(`$${name}: ${value};`);
+    }
+
+    return vars.join('\n');
+};
+
 const transform_ejs = (cb) => {
     src([src_glob('ejs'), '!' + src_glob('ejs/includes', 'ejs')])
-        .pipe(ejs({}))
+        .pipe(ejs(readConfig()))
         .on('error', log)
         .pipe(rename({ extname: '.html' }))
         .pipe(htmlmin(htmlminopts))
@@ -90,7 +136,12 @@ const transform_modules = (cb) => {
 };
 
 const transform_sass = (cb) => {
-    src(src_glob('scss'))
+    let colors = compileSassVars(
+        readJSON(src_path_to('config/theme.json')).colors
+    );
+
+    src(src_path_to('scss/main.scss'))
+        .pipe(inject.prepend(colors))
         .pipe(sass.sync().on('error', sass.logError))
         .pipe(rename({ extname: '.css' }))
         .pipe(postcss([autoprefixer(), cssnano()]))
@@ -112,9 +163,12 @@ export const build = parallel(
 );
 
 export const watch = (cb) => {
-    gulpwatch(src_glob('ejs'), transform_ejs);
+    gulpwatch([src_glob('ejs'), src_glob('config', 'json')], transform_ejs);
     gulpwatch(src_glob('mjs'), transform_modules);
-    gulpwatch(src_glob('scss'), transform_sass);
+    gulpwatch(
+        [src_glob('scss'), src_path_to('config/theme.json')],
+        transform_sass
+    );
     gulpwatch(src_glob('public', '*'), transform_public);
     cb();
 };
